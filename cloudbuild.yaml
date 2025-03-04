@@ -1,3 +1,6 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 steps:
   # reservations
   - name: "gcr.io/cloud-builders/docker"
@@ -26,8 +29,7 @@ steps:
         ".",
       ]
   - name: "gcr.io/cloud-builders/docker"
-    args:
-      ["push", "us-east1-docker.pkg.dev/sleepr-450814/auth/production"]
+    args: ["push", "us-east1-docker.pkg.dev/sleepr-450814/auth/production"]
 
   # payments
   - name: "gcr.io/cloud-builders/docker"
@@ -41,8 +43,7 @@ steps:
         ".",
       ]
   - name: "gcr.io/cloud-builders/docker"
-    args:
-      ["push", "us-east1-docker.pkg.dev/sleepr-450814/payments/production"]
+    args: ["push", "us-east1-docker.pkg.dev/sleepr-450814/payments/production"]
 
   # notifications
   - name: "gcr.io/cloud-builders/docker"
@@ -58,5 +59,3 @@ steps:
   - name: "gcr.io/cloud-builders/docker"
     args:
       ["push", "us-east1-docker.pkg.dev/sleepr-450814/notifications/production"]
-
-
