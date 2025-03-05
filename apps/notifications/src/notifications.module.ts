@@ -11,11 +11,6 @@ import { LoggerModule } from '@app/common';
       isGlobal: true,
       validationSchema: Joi.object({
         PORT: Joi.number().required(),
-        EMAIL_HOST: Joi.string().required(),
-        EMAIL_PORT: Joi.number().required(),
-        EMAIL_USER: Joi.string().required(),
-        EMAIL_PASSWORD: Joi.string().required(),
-
         SMTP_USER: Joi.string().required(),
         GOOGLE_OAUTH_CLIENT_ID: Joi.string().required(),
         GOOGLE_OAUTH_CLIENT_SECRET: Joi.string().required(),
