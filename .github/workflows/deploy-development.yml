@@ -1,0 +1,134 @@
+name: Deploy to Development
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Images"]
+    branches: [development]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # For development, we'll package the app as a Docker Compose setup for Elastic Beanstalk
+      - name: Create Dockerrun.aws.json
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          
+          cat > Dockerrun.aws.json <<EOF
+          {
+            "AWSEBDockerrunVersion": "3",
+            "containerDefinitions": [
+              {
+                "name": "reservations",
+                "image": "${ECR_REGISTRY}/reservations:latest",
+                "essential": true,
+                "memory": 256,
+                "portMappings": [
+                  {
+                    "hostPort": 3000,
+                    "containerPort": 3000
+                  }
+                ],
+                "environment": [
+                  { "name": "MONGODB_URI", "value": "${{ secrets.MONGODB_URI }}" },
+                  { "name": "PORT", "value": "3000" },
+                  { "name": "AUTH_HOST", "value": "auth" },
+                  { "name": "AUTH_PORT", "value": "3002" },
+                  { "name": "PAYMENTS_HOST", "value": "payments" },
+                  { "name": "PAYMENTS_PORT", "value": "3001" }
+                ]
+              },
+              {
+                "name": "auth",
+                "image": "${ECR_REGISTRY}/auth:latest",
+                "essential": true,
+                "memory": 256,
+                "portMappings": [
+                  {
+                    "hostPort": 3001,
+                    "containerPort": 3001
+                  },
+                  {
+                    "hostPort": 3002,
+                    "containerPort": 3002
+                  }
+                ],
+                "environment": [
+                  { "name": "MONGODB_URI", "value": "${{ secrets.MONGODB_URI }}" },
+                  { "name": "JWT_SECRET", "value": "${{ secrets.JWT_SECRET }}" },
+                  { "name": "JWT_EXPIRATION", "value": "3600" },
+                  { "name": "HTTP_PORT", "value": "3001" },
+                  { "name": "TCP_PORT", "value": "3002" }
+                ]
+              },
+              {
+                "name": "payments",
+                "image": "${ECR_REGISTRY}/payments:latest",
+                "essential": true,
+                "memory": 256,
+                "environment": [
+                  { "name": "PORT", "value": "3001" },
+                  { "name": "NOTIFICATIONS_HOST", "value": "notifications" },
+                  { "name": "NOTIFICATIONS_PORT", "value": "3000" },
+                  { "name": "STRIPE_SECRET_KEY", "value": "${{ secrets.STRIPE_SECRET_KEY }}" }
+                ]
+              },
+              {
+                "name": "notifications",
+                "image": "${ECR_REGISTRY}/notifications:latest",
+                "essential": true,
+                "memory": 256,
+                "environment": [
+                  { "name": "PORT", "value": "3000" },
+                  { "name": "SMTP_USER", "value": "${{ secrets.SMTP_USER }}" },
+                  { "name": "GOOGLE_OAUTH_CLIENT_ID", "value": "${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}" },
+                  { "name": "GOOGLE_OAUTH_CLIENT_SECRET", "value": "${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}" },
+                  { "name": "GOOGLE_OAUTH_REFRESH_TOKEN", "value": "${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}" }
+                ]
+              }
+            ]
+          }
+          EOF
+
+      # Create a zip file for Elastic Beanstalk deployment
+      - name: Create deployment package
+        run: |
+          zip -r deploy.zip Dockerrun.aws.json
+
+      # Upload to S3 and deploy to Elastic Beanstalk
+      - name: Upload deployment package to S3
+        run: |
+          aws s3 cp deploy.zip s3://${{ secrets.AWS_EB_BUCKET }}/deploy-${{ github.sha }}.zip
+
+      # Deploy to Elastic Beanstalk
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name sleepr \
+            --version-label ${{ github.sha }} \
+            --source-bundle S3Bucket="${{ secrets.AWS_EB_BUCKET }}",S3Key="deploy-${{ github.sha }}.zip"
+          
+          aws elasticbeanstalk update-environment \
+            --application-name sleepr \
+            --environment-name sleepr-development \
+            --version-label ${{ github.sha }}

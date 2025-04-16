@@ -1,0 +1,81 @@
+name: Build and Push Images
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - main
+      - development
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set environment variables
+        id: set-env
+        run: |
+          if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=development" >> $GITHUB_ENV
+          fi
+          echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
+          echo "IMAGE_TAG=`echo ${GITHUB_REF#refs/heads/}-${GITHUB_SHA} | cut -c1-20`" >> $GITHUB_ENV
+
+      - name: Build and push auth service
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/auth:$IMAGE_TAG -t $ECR_REGISTRY/auth:latest -f apps/auth/Dockerfile .
+          docker push $ECR_REGISTRY/auth:$IMAGE_TAG
+          docker push $ECR_REGISTRY/auth:latest
+
+      - name: Build and push notifications service
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/notifications:$IMAGE_TAG -t $ECR_REGISTRY/notifications:latest -f apps/notifications/Dockerfile .
+          docker push $ECR_REGISTRY/notifications:$IMAGE_TAG
+          docker push $ECR_REGISTRY/notifications:latest
+
+      - name: Build and push payments service
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/payments:$IMAGE_TAG -t $ECR_REGISTRY/payments:latest -f apps/payments/Dockerfile .
+          docker push $ECR_REGISTRY/payments:$IMAGE_TAG
+          docker push $ECR_REGISTRY/payments:latest
+
+      - name: Build and push reservations service
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/reservations:$IMAGE_TAG -t $ECR_REGISTRY/reservations:latest -f apps/reservations/Dockerfile .
+          docker push $ECR_REGISTRY/reservations:$IMAGE_TAG
+          docker push $ECR_REGISTRY/reservations:latest
+
+      # Output the image details for the next step
+      - name: Set output
+        id: image-tag
+        run: |
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
