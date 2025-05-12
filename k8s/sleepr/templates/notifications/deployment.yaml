@@ -3,28 +3,30 @@ kind: Deployment
 metadata:
   labels:
     app: notifications
+    environment: { { .Values.environment } }
   name: notifications
+  namespace: { { .Release.Namespace } }
 spec:
-  replicas: 1
+  replicas: { { .Values.replicas.notifications } }
   selector:
     matchLabels:
       app: notifications
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: notifications
+        environment: { { .Values.environment } }
     spec:
       containers:
-        - image: us-east1-docker.pkg.dev/sleepr-450814/notifications/production
+        - image: "{{ .Values.aws.accountId }}.dkr.ecr.{{ .Values.aws.region }}.amazonaws.com/{{ .Values.images.notifications }}"
           name: notifications
           env:
             - name: PORT
-              value: "3000"
+              value: "{{ .Values.ports.notifications }}"
             - name: GOOGLE_OAUTH_CLIENT_ID
-              value: 1053188456297-o63lu6ksfo8qik7svj6bquq18cjd0s6a.apps.googleusercontent.com
+              value: "{{ .Values.googleOauthClientId }}"
             - name: SMTP_USER
-              value: patterson.leon1960@gmail.com
+              value: "{{ .Values.smtpUser }}"
             - name: GOOGLE_OAUTH_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -36,4 +38,24 @@ spec:
                   name: google
                   key: refreshToken
           ports:
-            - containerPort: 3000
+            - containerPort: { { .Values.ports.notifications } }
+              name: http
+          resources:
+            requests:
+              cpu: { { .Values.resources.requests.cpu } }
+              memory: { { .Values.resources.requests.memory } }
+            limits:
+              cpu: { { .Values.resources.limits.cpu } }
+              memory: { { .Values.resources.limits.memory } }
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20

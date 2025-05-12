@@ -1,0 +1,44 @@
+# Base configuration shared across all environments
+
+# AWS Configuration (will be overridden)
+aws:
+  region: us-east-1
+  accountId: "your-aws-account-id"
+
+# Resource configuration
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+# Replica counts
+replicas:
+  auth: 1
+  notifications: 1
+  payments: 1
+  reservations: 1
+
+# Application configuration
+jwt:
+  expiration: 3600
+
+# Service ports
+ports:
+  auth:
+    http: 3003
+    tcp: 3002
+  notifications: 3000
+  payments: 3001
+  reservations: 3004
+
+# Secrets (placeholders, will be overridden during deployment)
+mongodbUri: "mongodb://placeholder"
+jwtSecret: "placeholder"
+stripeSecretKey: "placeholder"
+googleOauthClientId: "placeholder"
+googleOauthClientSecret: "placeholder"
+googleOauthRefreshToken: "placeholder"
+smtpUser: "placeholder"

@@ -3,9 +3,11 @@ kind: Deployment
 metadata:
   labels:
     app: payments
+    environment: { { .Values.environment } }
   name: payments
+  namespace: { { .Release.Namespace } }
 spec:
-  replicas: 1
+  replicas: { { .Values.replicas.payments } }
   selector:
     matchLabels:
       app: payments
@@ -13,21 +15,42 @@ spec:
     metadata:
       labels:
         app: payments
+        environment: { { .Values.environment } }
     spec:
       containers:
-        - image: us-east1-docker.pkg.dev/sleepr-450814/payments/production
+        - image: "{{ .Values.aws.accountId }}.dkr.ecr.{{ .Values.aws.region }}.amazonaws.com/{{ .Values.images.payments }}"
           name: payments
           env:
             - name: PORT
-              value: "3001"
+              value: "{{ .Values.ports.payments }}"
             - name: NOTIFICATIONS_HOST
               value: notifications
             - name: NOTIFICATIONS_PORT
-              value: "3000"
+              value: "{{ .Values.ports.notifications }}"
             - name: STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: stripe
                   key: apiKey
           ports:
-            - containerPort: 3001
+            - containerPort: { { .Values.ports.payments } }
+              name: http
+          resources:
+            requests:
+              cpu: { { .Values.resources.requests.cpu } }
+              memory: { { .Values.resources.requests.memory } }
+            limits:
+              cpu: { { .Values.resources.limits.cpu } }
+              memory: { { .Values.resources.limits.memory } }
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20

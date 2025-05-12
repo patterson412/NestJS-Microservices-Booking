@@ -79,3 +79,4 @@ jobs:
         id: image-tag
         run: |
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "registry=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_OUTPUT

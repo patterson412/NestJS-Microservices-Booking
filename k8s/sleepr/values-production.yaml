@@ -1,0 +1,41 @@
+# Production-specific values
+environment: production
+
+# AWS Configuration for production
+aws:
+  region: us-east-1
+  accountId: "your-aws-account-id"
+
+# Production uses more resources
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# More replicas for production for high availability
+replicas:
+  auth: 2
+  notifications: 2
+  payments: 2
+  reservations: 2
+
+# Configure the images for production
+images:
+  auth: auth:latest
+  notifications: notifications:latest
+  payments: payments:latest
+  reservations: reservations:latest
+
+# Use production ingress settings
+#ingress:
+#  annotations:
+#    kubernetes.io/ingress.class: alb
+#    alb.ingress.kubernetes.io/scheme: internet-facing
+#    alb.ingress.kubernetes.io/target-type: ip
+#    alb.ingress.kubernetes.io/group.name: sleepr-production
+    # Remove these two lines until you have a custom domain with SSL
+    # alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'

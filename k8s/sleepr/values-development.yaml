@@ -1,0 +1,38 @@
+# Development-specific values
+environment: development
+
+# AWS Configuration for development
+aws:
+  region: us-east-1
+  accountId: "your-aws-account-id"
+
+# Development uses smaller resources
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+# Single replica for each service in development
+replicas:
+  auth: 1
+  notifications: 1
+  payments: 1
+  reservations: 1
+
+# Configure the images for development
+images:
+  auth: auth:latest
+  notifications: notifications:latest
+  payments: payments:latest
+  reservations: reservations:latest
+
+# Use development ingress settings
+#ingress:
+#  annotations:
+#    kubernetes.io/ingress.class: alb
+#    alb.ingress.kubernetes.io/scheme: internet-facing
+#    alb.ingress.kubernetes.io/target-type: ip
+#    alb.ingress.kubernetes.io/group.name: sleepr-development

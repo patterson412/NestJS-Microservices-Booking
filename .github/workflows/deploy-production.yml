@@ -38,34 +38,26 @@ jobs:
         run: |
           aws eks update-kubeconfig --name sleepr-production --region ${{ secrets.AWS_REGION }}
 
-      - name: Update Helm Chart values
-        run: |
-          # Determine the ECR repository URL
-          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
-          
-          # Create a values file for Helm with the updated image tags
-          cat > production-values.yaml <<EOF
-          auth:
-            image: ${ECR_REGISTRY}/auth:latest
-          notifications:
-            image: ${ECR_REGISTRY}/notifications:latest
-          payments:
-            image: ${ECR_REGISTRY}/payments:latest
-          reservations:
-            image: ${ECR_REGISTRY}/reservations:latest
-          EOF
-
       - name: Deploy to EKS with Helm
         run: |
+          # Get AWS account ID
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          
+          # Deploy with Helm
           helm upgrade --install sleepr ./k8s/sleepr \
             --namespace sleepr \
-            --values production-values.yaml \
-            --set-string mongodbUri="${{ secrets.MONGODB_URI }}" \
-            --set-string jwtSecret="${{ secrets.JWT_SECRET }}" \
-            --set-string stripeSecretKey="${{ secrets.STRIPE_SECRET_KEY }}" \
-            --set-string googleOauthClientId="${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}" \
-            --set-string googleOauthClientSecret="${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}" \
-            --set-string googleOauthRefreshToken="${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}"
+            --create-namespace \
+            --values ./k8s/sleepr/values.yaml \
+            --values ./k8s/sleepr/values-production.yaml \
+            --set aws.accountId=$AWS_ACCOUNT_ID \
+            --set aws.region=${{ secrets.AWS_REGION }} \
+            --set mongodbUri="${{ secrets.MONGODB_URI }}" \
+            --set jwtSecret="${{ secrets.JWT_SECRET }}" \
+            --set stripeSecretKey="${{ secrets.STRIPE_SECRET_KEY }}" \
+            --set googleOauthClientId="${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}" \
+            --set googleOauthClientSecret="${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}" \
+            --set googleOauthRefreshToken="${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}" \
+            --set smtpUser="${{ secrets.SMTP_USER }}"
           
           # Verify the deployment
           kubectl get pods -n sleepr

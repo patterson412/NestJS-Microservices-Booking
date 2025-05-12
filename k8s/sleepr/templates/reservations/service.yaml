@@ -3,13 +3,15 @@ kind: Service
 metadata:
   labels:
     app: reservations
+    environment: { { .Values.environment } }
   name: reservations
+  namespace: { { .Release.Namespace } }
 spec:
   ports:
-  - name: "http"
-    port: 3004
-    protocol: TCP
-    targetPort: 3004
+    - name: "http"
+      port: { { .Values.ports.reservations } }
+      protocol: TCP
+      targetPort: { { .Values.ports.reservations } }
   selector:
     app: reservations
   type: NodePort

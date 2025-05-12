@@ -3,9 +3,11 @@ kind: Deployment
 metadata:
   labels:
     app: reservations
+    environment: { { .Values.environment } }
   name: reservations
+  namespace: { { .Release.Namespace } }
 spec:
-  replicas: 1
+  replicas: { { .Values.replicas.reservations } }
   selector:
     matchLabels:
       app: reservations
@@ -13,9 +15,10 @@ spec:
     metadata:
       labels:
         app: reservations
+        environment: { { .Values.environment } }
     spec:
       containers:
-        - image: us-east1-docker.pkg.dev/sleepr-450814/reservations/production
+        - image: "{{ .Values.aws.accountId }}.dkr.ecr.{{ .Values.aws.region }}.amazonaws.com/{{ .Values.images.reservations }}"
           name: reservations
           env:
             - name: MONGODB_URI
@@ -24,14 +27,34 @@ spec:
                   name: mongodb
                   key: connectionString
             - name: PORT
-              value: "3004"
+              value: "{{ .Values.ports.reservations }}"
             - name: AUTH_HOST
               value: auth-tcp
             - name: AUTH_PORT
-              value: "3002"
+              value: "{{ .Values.ports.auth.tcp }}"
             - name: PAYMENTS_HOST
               value: payments
             - name: PAYMENTS_PORT
-              value: "3001"
+              value: "{{ .Values.ports.payments }}"
           ports:
-            - containerPort: 3004
+            - containerPort: { { .Values.ports.reservations } }
+              name: http
+          resources:
+            requests:
+              cpu: { { .Values.resources.requests.cpu } }
+              memory: { { .Values.resources.requests.memory } }
+            limits:
+              cpu: { { .Values.resources.limits.cpu } }
+              memory: { { .Values.resources.limits.memory } }
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20

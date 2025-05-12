@@ -2,6 +2,12 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: sleepr
+  namespace: { { .Release.Namespace } }
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: sleepr-{{ .Values.environment }}
 spec:
   rules:
     - http:
@@ -12,18 +18,18 @@ spec:
               service:
                 name: reservations
                 port:
-                  number: 3004
+                  number: { { .Values.ports.reservations } }
           - path: /auth/*
             pathType: ImplementationSpecific
             backend:
               service:
                 name: auth-http
                 port:
-                  number: 3003
+                  number: { { .Values.ports.auth.http } }
           - path: /users/*
             pathType: ImplementationSpecific
             backend:
               service:
                 name: auth-http
                 port:
-                  number: 3003
+                  number: { { .Values.ports.auth.http } }

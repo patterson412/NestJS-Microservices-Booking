@@ -3,13 +3,15 @@ kind: Service
 metadata:
   labels:
     app: auth
+    environment: { { .Values.environment } }
   name: auth-http
+  namespace: { { .Release.Namespace } }
 spec:
   ports:
     - name: "http"
-      port: 3003
+      port: { { .Values.ports.auth.http } }
       protocol: TCP
-      targetPort: 3003
+      targetPort: { { .Values.ports.auth.http } }
   selector:
     app: auth
   type: NodePort

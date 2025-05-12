@@ -3,13 +3,15 @@ kind: Service
 metadata:
   labels:
     app: payments
+    environment: { { .Values.environment } }
   name: payments
+  namespace: { { .Release.Namespace } }
 spec:
   ports:
-  - name: "tcp"
-    port: 3001
-    protocol: TCP
-    targetPort: 3001
+    - name: "http"
+      port: { { .Values.ports.payments } }
+      protocol: TCP
+      targetPort: { { .Values.ports.payments } }
   selector:
     app: payments
   type: ClusterIP
