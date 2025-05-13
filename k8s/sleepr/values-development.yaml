@@ -24,10 +24,10 @@ replicas:
 
 # Configure the images for development
 images:
-  auth: auth:latest
-  notifications: notifications:latest
-  payments: payments:latest
-  reservations: reservations:latest
+  auth: auth:dev-latest
+  notifications: notifications:dev-latest
+  payments: payments:dev-latest
+  reservations: reservations:dev-latest
 
 # Use development ingress settings
 #ingress:

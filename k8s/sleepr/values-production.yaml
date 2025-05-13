@@ -24,10 +24,10 @@ replicas:
 
 # Configure the images for production
 images:
-  auth: auth:latest
-  notifications: notifications:latest
-  payments: payments:latest
-  reservations: reservations:latest
+  auth: auth:prod-latest
+  notifications: notifications:prod-latest
+  payments: payments:prod-latest
+  reservations: reservations:prod-latest
 
 # Use production ingress settings
 #ingress:

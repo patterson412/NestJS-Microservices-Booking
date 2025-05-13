@@ -34,49 +34,59 @@ jobs:
       - name: Set environment variables
         id: set-env
         run: |
-          if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
+          if [[ "${{ github.ref }}" == 'refs/heads/main' ]]; then
             echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            echo "ENV_TAG=prod" >> $GITHUB_ENV
           else
             echo "ENVIRONMENT=development" >> $GITHUB_ENV
+            echo "ENV_TAG=dev" >> $GITHUB_ENV
           fi
-          echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
-          echo "IMAGE_TAG=`echo ${GITHUB_REF#refs/heads/}-${GITHUB_SHA} | cut -c1-20`" >> $GITHUB_ENV
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${ENV_TAG}-${SHORT_SHA}" >> $GITHUB_ENV
 
       - name: Build and push auth service
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ENV_TAG: ${{ env.ENV_TAG }}
         run: |
-          docker build -t $ECR_REGISTRY/auth:$IMAGE_TAG -t $ECR_REGISTRY/auth:latest -f apps/auth/Dockerfile .
+          docker build -t $ECR_REGISTRY/auth:$IMAGE_TAG -t $ECR_REGISTRY/auth:${ENV_TAG}-latest -f apps/auth/Dockerfile .
           docker push $ECR_REGISTRY/auth:$IMAGE_TAG
-          docker push $ECR_REGISTRY/auth:latest
+          docker push $ECR_REGISTRY/auth:${ENV_TAG}-latest
 
       - name: Build and push notifications service
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ENV_TAG: ${{ env.ENV_TAG }}
         run: |
-          docker build -t $ECR_REGISTRY/notifications:$IMAGE_TAG -t $ECR_REGISTRY/notifications:latest -f apps/notifications/Dockerfile .
+          docker build -t $ECR_REGISTRY/notifications:$IMAGE_TAG -t $ECR_REGISTRY/notifications:${ENV_TAG}-latest -f apps/notifications/Dockerfile .
           docker push $ECR_REGISTRY/notifications:$IMAGE_TAG
-          docker push $ECR_REGISTRY/notifications:latest
+          docker push $ECR_REGISTRY/notifications:${ENV_TAG}-latest
 
       - name: Build and push payments service
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ENV_TAG: ${{ env.ENV_TAG }}
         run: |
-          docker build -t $ECR_REGISTRY/payments:$IMAGE_TAG -t $ECR_REGISTRY/payments:latest -f apps/payments/Dockerfile .
+          docker build -t $ECR_REGISTRY/payments:$IMAGE_TAG -t $ECR_REGISTRY/payments:${ENV_TAG}-latest -f apps/payments/Dockerfile .
           docker push $ECR_REGISTRY/payments:$IMAGE_TAG
-          docker push $ECR_REGISTRY/payments:latest
+          docker push $ECR_REGISTRY/payments:${ENV_TAG}-latest
 
       - name: Build and push reservations service
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ENV_TAG: ${{ env.ENV_TAG }}
         run: |
-          docker build -t $ECR_REGISTRY/reservations:$IMAGE_TAG -t $ECR_REGISTRY/reservations:latest -f apps/reservations/Dockerfile .
+          docker build -t $ECR_REGISTRY/reservations:$IMAGE_TAG -t $ECR_REGISTRY/reservations:${ENV_TAG}-latest -f apps/reservations/Dockerfile .
           docker push $ECR_REGISTRY/reservations:$IMAGE_TAG
-          docker push $ECR_REGISTRY/reservations:latest
+          docker push $ECR_REGISTRY/reservations:${ENV_TAG}-latest
 
-      # Output the image details for the next step
       - name: Set output
         id: image-tag
         run: |
-          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
           echo "registry=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_OUTPUT
