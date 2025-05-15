@@ -6,7 +6,7 @@ import { Response } from 'express';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
-@Controller('auth')
+@Controller('auth') // This controller handles authentication-related routes
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
