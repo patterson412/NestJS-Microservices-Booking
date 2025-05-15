@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: sleepr
-  namespace: { { .Release.Namespace } }
+  namespace: {{ .Release.Namespace }}
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -18,18 +18,18 @@ spec:
               service:
                 name: reservations
                 port:
-                  number: { { .Values.ports.reservations } }
+                  number: {{ .Values.ports.reservations }}
           - path: /auth/*
             pathType: ImplementationSpecific
             backend:
               service:
                 name: auth-http
                 port:
-                  number: { { .Values.ports.auth.http } }
+                  number: {{ .Values.ports.auth.http }}
           - path: /users/*
             pathType: ImplementationSpecific
             backend:
               service:
                 name: auth-http
                 port:
-                  number: { { .Values.ports.auth.http } }
+                  number: {{ .Values.ports.auth.http }}

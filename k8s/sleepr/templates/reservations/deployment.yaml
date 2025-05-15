@@ -3,11 +3,11 @@ kind: Deployment
 metadata:
   labels:
     app: reservations
-    environment: { { .Values.environment } }
+    environment: {{ .Values.environment }}
   name: reservations
-  namespace: { { .Release.Namespace } }
+  namespace: {{ .Release.Namespace }}
 spec:
-  replicas: { { .Values.replicas.reservations } }
+  replicas: {{ .Values.replicas.reservations }}
   selector:
     matchLabels:
       app: reservations
@@ -15,7 +15,7 @@ spec:
     metadata:
       labels:
         app: reservations
-        environment: { { .Values.environment } }
+        environment: {{ .Values.environment }}
     spec:
       containers:
         - image: "{{ .Values.aws.accountId }}.dkr.ecr.{{ .Values.aws.region }}.amazonaws.com/{{ .Values.images.reservations }}"
@@ -37,15 +37,15 @@ spec:
             - name: PAYMENTS_PORT
               value: "{{ .Values.ports.payments }}"
           ports:
-            - containerPort: { { .Values.ports.reservations } }
+            - containerPort: {{ .Values.ports.reservations }}
               name: http
           resources:
             requests:
-              cpu: { { .Values.resources.requests.cpu } }
-              memory: { { .Values.resources.requests.memory } }
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
             limits:
-              cpu: { { .Values.resources.limits.cpu } }
-              memory: { { .Values.resources.limits.memory } }
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
           readinessProbe:
             httpGet:
               path: /

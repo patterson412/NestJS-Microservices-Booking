@@ -3,11 +3,11 @@ kind: Deployment
 metadata:
   labels:
     app: payments
-    environment: { { .Values.environment } }
+    environment: {{ .Values.environment }}
   name: payments
-  namespace: { { .Release.Namespace } }
+  namespace: {{ .Release.Namespace }}
 spec:
-  replicas: { { .Values.replicas.payments } }
+  replicas: {{ .Values.replicas.payments }}
   selector:
     matchLabels:
       app: payments
@@ -15,7 +15,7 @@ spec:
     metadata:
       labels:
         app: payments
-        environment: { { .Values.environment } }
+        environment: {{ .Values.environment }}
     spec:
       containers:
         - image: "{{ .Values.aws.accountId }}.dkr.ecr.{{ .Values.aws.region }}.amazonaws.com/{{ .Values.images.payments }}"
@@ -33,15 +33,15 @@ spec:
                   name: stripe
                   key: apiKey
           ports:
-            - containerPort: { { .Values.ports.payments } }
+            - containerPort: {{ .Values.ports.payments }}
               name: http
           resources:
             requests:
-              cpu: { { .Values.resources.requests.cpu } }
-              memory: { { .Values.resources.requests.memory } }
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
             limits:
-              cpu: { { .Values.resources.limits.cpu } }
-              memory: { { .Values.resources.limits.memory } }
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
           readinessProbe:
             httpGet:
               path: /
