@@ -3,15 +3,15 @@ kind: Service
 metadata:
   labels:
     app: notifications
-    environment: { { .Values.environment } }
+    environment: {{ .Values.environment }}
   name: notifications
-  namespace: { { .Release.Namespace } }
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
     - name: "http"
-      port: { { .Values.ports.notifications } }
+      port: {{ .Values.ports.notifications }}
       protocol: TCP
-      targetPort: { { .Values.ports.notifications } }
+      targetPort: {{ .Values.ports.notifications }}
   selector:
     app: notifications
   type: ClusterIP
